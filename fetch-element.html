@@ -12,6 +12,9 @@ Element for interacting with the fetch api and queuing requests up if working of
   <script>
     Polymer({
       is: 'fetch-element',
+      /**
+      * Takes a request and if online flushes the cache and executes the request otherwise queues the request and responds with a 202
+      */
       fetch: function (request) {
         if (navigator.onLine) {
           return this.flush()
@@ -25,6 +28,9 @@ Element for interacting with the fetch api and queuing requests up if working of
             })
         }
       },
+      /**
+      * Adds the request to the queue and stores it in local storage 
+      */
       queue: function (request) {
         let requestObj = this.serialize(request)
         return this.getLocalStorage('queue')
@@ -34,6 +40,9 @@ Element for interacting with the fetch api and queuing requests up if working of
             return this.setLocalStorage('queue', JSON.stringify(queue))
           })
       },
+      /**
+      * Flushes the stored queue and sets the stored queue to an empty array on completion
+      */
       flush: function () {
         return this.getLocalStorage('queue')
           .then(queue => {
@@ -48,16 +57,22 @@ Element for interacting with the fetch api and queuing requests up if working of
             }
           })
       },
+      /**
+      * Converts the stored queue into an array of requests and executes them in order and returns overall promise
+      */
       sendQueue: function (queue) {
         for (var i = 0; i < queue.length; i++) {
           queue[i] = fetch(this.deserialize(queue[i]))
         }
         return Promise.all(Array.from(queue))
       },
+      /**
+      * Converts request into a simple object so it can be stored
+      */
       serialize: function (request) {
         let headers = {}
-        for (var entry of request.headers.entries()) {
-          headers[entry[0]] = entry[1];
+        for (var e of request.headers.entries()) {
+          headers[e[0]] = e[1]
         }
         let requestObj = {
           url: request.url,
@@ -69,17 +84,26 @@ Element for interacting with the fetch api and queuing requests up if working of
           redirect: request.redirect,
           referrer: request.referrer
         }
-        if (request.method !== 'GET' && request.method !== 'HEAD') {
+        if (request.method === 'POST' || request.method === 'PUT') {
           requestObj.body = body
         }
         return requestObj
       },
+      /**
+      * Converts serialized request into a Request objector using constructor
+      */
       deserialize: function (request) {
         return new Request(request.url, request)
       },
+      /**
+      * Stored the queued requests in local storage
+      */
       setLocalStorage: function (key, data) {
         return Promise.resolve(window.localStorage.setItem(key, JSON.stringify(data)))
       },
+      /**
+      * Gets the stored requests from local storage and parses them to JSON
+      */
       getLocalStorage: function (key) {
         return Promise.resolve(JSON.parse(JSON.parse(window.localStorage.getItem(key))))
       }
