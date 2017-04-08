@@ -6,7 +6,7 @@ Element for interacting with the fetch api and queuing requests up if working of
 
 ## Installation
 
-`bower install fetch --save`
+`bower install fetch-offline-element --save`
 
 ## Usage
 
