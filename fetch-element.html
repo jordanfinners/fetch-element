@@ -1,0 +1,88 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<!--
+`fetch-element`
+Element for interacting with the fetch api and queuing requests up if working offline 
+
+@demo demo/index.html 
+-->
+
+
+<dom-module id="fetch-element">
+  <script>
+    Polymer({
+      is: 'fetch-element',
+      fetch: function (request) {
+        if (navigator.onLine) {
+          return this.flush()
+            .then(() => {
+              return fetch(request)
+            })
+        } else {
+          return this.queue(request)
+            .then(() => {
+              return new Response(null, { status: 202 })
+            })
+        }
+      },
+      queue: function (request) {
+        let requestObj = this.serialize(request)
+        return this.getLocalStorage('queue')
+          .then(queue => {
+            queue = queue || []
+            queue.push(requestObj)
+            return this.setLocalStorage('queue', JSON.stringify(queue))
+          })
+      },
+      flush: function () {
+        return this.getLocalStorage('queue')
+          .then(queue => {
+            queue = queue || []
+            if (queue.length === 0) {
+              return Promise.resolve()
+            } else {
+              return this.sendQueue(queue)
+                .then(() => {
+                  return this.setLocalStorage('queue', JSON.stringify([]))
+                })
+            }
+          })
+      },
+      sendQueue: function (queue) {
+        for (var i = 0; i < queue.length; i++) {
+          queue[i] = fetch(this.deserialize(queue[i]))
+        }
+        return Promise.all(Array.from(queue))
+      },
+      serialize: function (request) {
+        let headers = {}
+        for (var entry of request.headers.entries()) {
+          headers[entry[0]] = entry[1];
+        }
+        let requestObj = {
+          url: request.url,
+          headers: headers,
+          method: request.method,
+          mode: request.mode,
+          credentials: request.credentials,
+          cache: request.cache,
+          redirect: request.redirect,
+          referrer: request.referrer
+        }
+        if (request.method !== 'GET' && request.method !== 'HEAD') {
+          requestObj.body = body
+        }
+        return requestObj
+      },
+      deserialize: function (request) {
+        return new Request(request.url, request)
+      },
+      setLocalStorage: function (key, data) {
+        return Promise.resolve(window.localStorage.setItem(key, JSON.stringify(data)))
+      },
+      getLocalStorage: function (key) {
+        return Promise.resolve(JSON.parse(JSON.parse(window.localStorage.getItem(key))))
+      }
+    });
+  </script>
+</dom-module>
