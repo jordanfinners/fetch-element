@@ -2,7 +2,7 @@
 
 Element for interacting with the fetch api and queuing requests up if working offline 
 
-[![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/owner/my-element)
+[![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/jordanfinners/fetch-element)
 
 ## Installation
 
